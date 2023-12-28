@@ -1,51 +1,48 @@
 # Q&A Chatbot
-#from langchain.llms import OpenAI
-
 from dotenv import load_dotenv
-
-load_dotenv()  # take environment variables from .env.
-
 import streamlit as st
-import os
-import pathlib
-import textwrap
-
 import google.generativeai as genai
 
-from IPython.display import display
-from IPython.display import Markdown
+# Load environment variables
+load_dotenv()
+api_key = os.getenv("GOOGLE_API_KEY")
 
+# Configure Google API
+genai.configure(api_key=api_key)
 
-os.getenv("GOOGLE_API_KEY")
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-## Function to load OpenAI model and get respones
+# Initialize the model
 model = genai.GenerativeModel('gemini-pro')
 chat = model.start_chat(history=[])
+
 def get_gemini_response(question):
-    
-    response =chat.send_message(question,stream=True)
+    response = chat.send_message(question, stream=True)
     return response
 
-##initialize our streamlit app
-
+# Initialize our Streamlit app
 st.set_page_config(page_title="Q&A Demo")
-
 st.header("Gemini Application")
 
-input=st.text_input("Input: ",key="input")
+# Manage session state
+if 'history' not in st.session_state:
+    st.session_state['history'] = []
 
+input = st.text_input("Input your question here:", key="input")
+submit = st.button("Ask the Question")
+clear = st.button("Clear Chat")
 
-submit=st.button("Ask the question")
-
-## If ask button is clicked
-
+# If ask button is clicked
 if submit:
-    
-    response=get_gemini_response(input)
-    st.subheader("The Response is")
-    for chunk in response:
-        print(st.write(chunk.text))
-        print("_"*80)
-    
-    st.write(chat.history)
+    response = get_gemini_response(input)
+    st.session_state['history'].append((input, response))
+    for query, resp in st.session_state['history']:
+        st.text_area("Question", value=query, height=100, disabled=True)
+        for chunk in resp:
+            st.text_area("Response", value=chunk.text, height=100, disabled=True)
+
+# Clear chat history
+if clear:
+    st.session_state['history'] = []
+
+# Footer
+st.write("---")
+st.markdown("*Built with Streamlit and Google Gemini*")

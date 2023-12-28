@@ -1,1 +1,1 @@
-# End-To-End-Gemini-Project
+# Sample-Gemini-Project
